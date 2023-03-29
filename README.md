@@ -19,13 +19,11 @@ conda install -c conda-forge singularity
 
 ## step to run it
 
-1. Download the MSG.sif and overlay.img from the link:
+1. Download the data, MSG.sif and overlay.img from the [link](https://www.dropbox.com/sh/cysiek3bbo8eo4r/AAAjoAhwHRkl0wnGIjie9Kv8a?dl=0):
 
 	- MSG.sif is a basic ubuntu environments build based on the config file: BASE.singularity
 
 	- overlay.img is a image include all the required library for running the script
-
-2. Download the data files in the methods:
 
 	- gene.500k.id: The file include the coordinates of upstreaming and downstreaming 500k of a gene
 
