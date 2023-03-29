@@ -5,7 +5,7 @@ This code is the implemention of MSG methods published as following:
 Y. Ji, Q. Wei, R. Chen, Q. Wang, R. Tao, B. Li, Integration of multidimensional splicing data and GWAS summary statistics for risk gene discovery. PLoS Genet. 18, e1009814 (2022).
 
 
-## Requirements
+# Hassle-free way to run the code: singularity
 
 singularity > 3.8
 
@@ -76,6 +76,53 @@ singularity run -e --bind /nobackup,/home,/fs0 --overlay overlay.img MSG.sif per
 - runMSG
 
 generateXmatrix should be generated before generateCov
+
 generateXmatrix, generateYmatrix and generateCov should be generated before runMSG.
+
+
+
+## If you need to install the package by your self
+
+
+### Requirements
+
+1. perl modules
+
+	- Switch
+	- IPC::Run
+	- DBI
+	- List::Uniq
+	- Array::Utils
+	- String/Random
+	- MCE/Hobo.pm
+	- Env/Modify.pm
+
+2. Two customized perl modules
+	
+	- MyBase-Mysub: https://github.com/crotoc/MyBase-Mysub
+	- Bundle-Wrapper: https://github.com/crotoc/Bundle-Wrapper
+
+3. tabix: https://github.com/samtools/htslib
+
+4. parallel: https://www.gnu.org/software/parallel/
+
+5. R packages:
+
+	- data.table
+	- optparse
+	- magrittr
+	- reshape2
+	- pma
+	- mvtnorm
+	- rcpp
+	- devtools
+	- rcppeigen
+	- GBJ
+	- glmnet
+	- this.path
+	- dplyr
+	- plink2R
+	- TiscoMM
+	
 
 
