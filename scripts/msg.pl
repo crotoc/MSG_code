@@ -15,17 +15,17 @@ use List::Util qw /sum/;
 ####################################################################
 
 my $Version=Bundle::Wrapper->date;
-my $s=MyBase::Mysub->new();
+my $bundle=Bundle::Wrapper->new();
 my %opt;
 $opt{time}=Bundle::Wrapper->date;
 $opt{threads}=5;
 $opt{gene}="ENSG00000000419";
-$opt{file_genePos}="/scratch/cgg/yany14/MSG/data/gene.500k.id";
-$opt{file_snp}="/scratch/cgg/yany14/MSG/data/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.SHAPEIT2_phased.vcf.gz";
-$opt{file_sample}="/scratch/cgg/yany14/MSG/data/samples.filtered.used";
-$opt{file_rsid}="/scratch/cgg/yany14/MSG/data/hg38.vcf";
+$opt{file_genePos}="/nobackup/cgg/yany14/MSG/data/gene.500k.id";
+$opt{file_snp}="/nobackup/cgg/yany14/MSG/data/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.SHAPEIT2_phased.vcf.gz";
+$opt{file_sample}="/nobackup/cgg/yany14/MSG/data/samples.filtered.used";
+$opt{file_rsid}="/nobackup/cgg/yany14/MSG/data/hg38.vcf";
 $opt{file_splicing}="/fs0/yany14/MSG/data/rawSplice/*Whole_Blood*.gz";
-$opt{file_ldRef}="/scratch/cgg/yany14/MSG/data/LDREF/1000G.EUR.";
+$opt{file_ldRef}="/nobackup/cgg/yany14/MSG/data/LDREF/1000G.EUR.";
 $opt{dir_script}="/fs0/yany14/yany14/myscript/Rscripts/rmd/cca_multiple";
 $opt{sumstats}="/fs0/yany14/MSG/data/sumstats/clozukscz.sumstats";
 
@@ -89,25 +89,25 @@ $opt{dir_out}= Cwd::getcwd."/out",if ! $opt{dir_out};
 $opt{out}= !$opt{out}?"$opt{dir_out}/out":"$opt{dir_out}/$opt{out}";
 $opt{dir_log}="$opt{dir_out}/log",if !$opt{dir_log};
 
-my $b=Bundle::Wrapper->new(\%opt);
-$b->mkdir($opt{dir_out});
+my $bundle=Bundle::Wrapper->new(\%opt);
+$bundle->mkdir($opt{dir_out});
 $opt{dir_xmatrix}=$opt{dir_out}, if !$opt{dir_xmatrix};
 $opt{dir_ymatrix}=$opt{dir_out}, if !$opt{dir_ymatrix};
 $opt{dir_cov}=$opt{dir_out}, if !$opt{dir_cov};
 $opt{dir_msg}=$opt{dir_out}, if !$opt{dir_msg};
-$b->mkdir($opt{dir_xmatrix});
-$b->mkdir($opt{dir_ymatrix});
-$b->mkdir($opt{dir_cov});
-$b->mkdir($opt{dir_msg});
+$bundle->mkdir($opt{dir_xmatrix});
+$bundle->mkdir($opt{dir_ymatrix});
+$bundle->mkdir($opt{dir_cov});
+$bundle->mkdir($opt{dir_msg});
 
 if($opt{log}){
-    $b->mkdir($opt{dir_log});
+    $bundle->mkdir($opt{dir_log});
 }
 
 
 if(!$opt{e}){
-    $opt{cmdlist}=$b->getSub("main");
-    $s->opt_print(\%opt);
+    $opt{cmdlist}=$bundle->getSub("main");
+    $bundle->opt_print(\%opt);
     print "Add -e to excute\n";
     exit '0';
 }
@@ -208,30 +208,30 @@ foreach(@{$opt{cmd}}){
 #sub
 sub extractSnp {
     my $cmd;	
-    my $b=Bundle::Wrapper->new(\%opt);
-    $b->step_print("extract position of gene");
-    $b->input("$opt{file_genePos}");
-    $b->input("$opt{file_snp}");
+    my $bundle=Bundle::Wrapper->new(\%opt);
+    $bundle->step_print("extract position of gene");
+    $bundle->input("$opt{file_genePos}");
+    $bundle->input("$opt{file_snp}");
     
     open(my $fh_gene,"grep $opt{gene} $opt{file_genePos} | ");
     my $geneLine = <$fh_gene>;
     my @gene =split("\t",$geneLine); #"$gene:$chr:$start:$end"
 
     $opt{file_geneVcf} = $opt{dir_xmatrix}."/".Bundle::File->new($opt{gene})->Filename.".vcf";
-    $b->output("$opt{file_geneVcf}");
+    $bundle->output("$opt{file_geneVcf}");
     $cmd = "tabix $opt{file_snp} chr$gene[1]:$gene[2]-$gene[3] -h | grep -v \"^##\" > $opt{file_geneVcf}";
-    $b->run($cmd);
+    $bundle->run($cmd);
 }
 
 sub filterVcfSample {
     my $cmd;	
-    my $b=Bundle::Wrapper->new(\%opt);
-    $b->step_print("Select samples from vcf");
-    $b->input("$opt{file_geneVcf}");
-    $b->input("$opt{file_sample}");
+    my $bundle=Bundle::Wrapper->new(\%opt);
+    $bundle->step_print("Select samples from vcf");
+    $bundle->input("$opt{file_geneVcf}");
+    $bundle->input("$opt{file_sample}");
     $opt{file_geneVcfSelect} = $opt{dir_xmatrix}."/".Bundle::File->new($opt{gene})->Filename.".select.rsid.vcf";
-    $b->output("$opt{file_geneVcfSelect}");
-    if($b->isrun){
+    $bundle->output("$opt{file_geneVcfSelect}");
+    if($bundle->isrun){
 	open(my $fh_file_sample,"<$opt{file_sample}");
 	open(my $fh_file_geneVcf,"<$opt{file_geneVcf}");
 	chomp(my @sample=<$fh_file_sample>);
@@ -241,7 +241,9 @@ sub filterVcfSample {
 	## print Dumper @sample;
 	my $head_hash = &arrayIdxInHash(\@head_geneVcf);
 	my $select_idx = &getArrayFromHashByName(\@sample,$head_hash);
+	## print Dumper $select_idx;
 	my $rsid_hash = &rsidToHash();
+	## print Dumper $rsid_hash;
 	open(my $fh_geneVcfSelect, ">$opt{file_geneVcfSelect}");
 	foreach my $geneVcfLine(@geneVcf){
 	    my @tmp = split/\t/,$geneVcfLine;
@@ -258,12 +260,12 @@ sub filterVcfSample {
 
 sub calculateAC {
     my $cmd;	
-    my $b=Bundle::Wrapper->new(\%opt);
-    $b->step_print("calculate allele count");
-    $b->input("$opt{file_geneVcfSelect}");
+    my $bundle=Bundle::Wrapper->new(\%opt);
+    $bundle->step_print("calculate allele count");
+    $bundle->input("$opt{file_geneVcfSelect}");
     $opt{file_geneVcfSelectAc} = $opt{dir_xmatrix}."/".Bundle::File->new($opt{gene})->Filename.".select.rsid.vcf.ac";
-    $b->output("$opt{file_geneVcfSelectAc}");
-    if($b->isrun){
+    $bundle->output("$opt{file_geneVcfSelectAc}");
+    if($bundle->isrun){
 	open(my $fh_geneVcfSelect,$opt{file_geneVcfSelect});
 	chomp(my @geneVcfSelect=<$fh_geneVcfSelect>);
 	open(my $fh_geneVcfSelectAc, ">$opt{file_geneVcfSelectAc}");
@@ -287,12 +289,12 @@ sub calculateAC {
 
 sub formatXmatrix {
     my $cmd;	
-    my $b=Bundle::Wrapper->new(\%opt);
-    $b->step_print("Output Xmatrix");
-    $b->input("$opt{file_geneVcfSelectAc}");
+    my $bundle=Bundle::Wrapper->new(\%opt);
+    $bundle->step_print("Output Xmatrix");
+    $bundle->input("$opt{file_geneVcfSelectAc}");
     $opt{file_xmatrix} = $opt{dir_xmatrix}."/".Bundle::File->new($opt{gene})->Filename.".select.rsid.vcf.ac.x_all";
-    $b->output("$opt{file_xmatrix}");
-    if($b->isrun){
+    $bundle->output("$opt{file_xmatrix}");
+    if($bundle->isrun){
 	open(my $fh_geneVcfSelectAc,$opt{file_geneVcfSelectAc});
 	chomp(my @geneVcfSelectAc=<$fh_geneVcfSelectAc>);
 	open(my $fh_xmatrix,">$opt{file_xmatrix}");
@@ -315,56 +317,56 @@ sub formatXmatrix {
 
 sub getSplicing {
     my $cmd;	
-    my $b=Bundle::Wrapper->new(\%opt);
-    $b->step_print("Get Splicing from gtex data");
+    my $bundle=Bundle::Wrapper->new(\%opt);
+    $bundle->step_print("Get Splicing from gtex data");
     my @input;
     if($opt{file_splicing}=~/\*/){
 	chomp(@input = `ls $opt{file_splicing}`)
     }
-    $b->input(@input);
+    $bundle->input(@input);
     $opt{file_geneSplicing} = $opt{dir_ymatrix}."/".Bundle::File->new($opt{gene})->Filename.".splicing";
-    $b->output($opt{file_geneSplicing});
+    $bundle->output($opt{file_geneSplicing});
     $cmd="parallel -j $opt{threads} --line-buffer -k -q bash -c ' zq --raw '\\''select a.line from index_first a where (a.key like \"ID\" OR a.key like \"\%$opt{gene}\%\")'\\'' {1} | perl -F\"\\t\" -slane '\\''if(\$.==1){print \"tissue\\t\$_\";next}print \$tissue,\"\\t\$_\"'\\'' -- -tissue={=1 s#.*/##g;s#.v\\d+.*##g=}' ::: $opt{file_splicing}  ::: $opt{gene} > $opt{file_geneSplicing}";
-    $b->run($cmd);
+    $bundle->run($cmd);
 }
 
 sub extractSplicing {
     my $cmd;	
-    my $b=Bundle::Wrapper->new(\%opt);
-    $b->step_print("extract splicing of gene");
-    $b->input("$opt{file_genePos}");
+    my $bundle=Bundle::Wrapper->new(\%opt);
+    $bundle->step_print("extract splicing of gene");
+    $bundle->input("$opt{file_genePos}");
     my @input;
     if($opt{file_splicing}=~/\*/){
 	chomp(@input = `ls $opt{file_splicing}`)
     }
-    $b->input(@input);
+    $bundle->input(@input);
     
     open(my $fh_gene,"grep $opt{gene} $opt{file_genePos} | ");
     my $geneLine = <$fh_gene>;
     my @gene =split("\t",$geneLine); #"$gene:$chr:$start:$end"
 
     $opt{file_geneSplicing} = $opt{dir_ymatrix}."/".Bundle::File->new($opt{gene})->Filename.".splicing";
-    $b->output("$opt{file_geneSplicing}");
+    $bundle->output("$opt{file_geneSplicing}");
     $cmd = "parallel -j $opt{threads} --line-buffer -k -q bash -c 'tabix {1} chr$gene[1]:$gene[4]-$gene[5] -h  | perl -F\"\\t\" -slane '\\''print \$tissue,\"\\t\$_\"'\\'' -- -tissue={=1 s#.*/##g;s#.v\\d+.*##g=}' ::: $opt{file_splicing} > $opt{file_geneSplicing}";
-    $b->run($cmd);
+    $bundle->run($cmd);
 
     $b=Bundle::Wrapper->new(\%opt);
     chomp(my $colnum = `perl -F\"\\t\" -lane 'print scalar(\@F)' $opt{file_geneSplicing} | sort | uniq -c | wc -l`);
     if($colnum!=1){
-	$b->throw("The gene splicing file has lines with various columns. Make sure input the correct spicing files: a single tissue file or multiple files with the same columns")
+	$bundle->throw("The gene splicing file has lines with various columns. Make sure input the correct spicing files: a single tissue file or multiple files with the same columns")
     }
 }
 
 
 sub filterSplicingSample {
     my $cmd;	
-    my $b=Bundle::Wrapper->new(\%opt);
-    $b->step_print("Select samples from geme splicing file");
-    $b->input("$opt{file_geneSplicing}");
-    $b->input("$opt{file_sample}");
+    my $bundle=Bundle::Wrapper->new(\%opt);
+    $bundle->step_print("Select samples from geme splicing file");
+    $bundle->input("$opt{file_geneSplicing}");
+    $bundle->input("$opt{file_sample}");
     $opt{file_geneSplicingSelect} = $opt{dir_ymatrix}."/".Bundle::File->new($opt{gene})->Filename.".select.splicing";
-    $b->output("$opt{file_geneSplicingSelect}");
-    if($b->isrun){
+    $bundle->output("$opt{file_geneSplicingSelect}");
+    if($bundle->isrun){
 	open(my $fh_file_sample,"<$opt{file_sample}");
 	open(my $fh_file_geneSplicing,"<$opt{file_geneSplicing}");
 	chomp(my @sample=<$fh_file_sample>);
@@ -385,48 +387,48 @@ sub filterSplicingSample {
 
 sub formatYmatrixForSingleTissue {
     my $cmd;	
-    my $b=Bundle::Wrapper->new(\%opt);
-    $b->step_print("formatYmatrix");
-    $b->input("$opt{file_geneSplicingSelect}");
+    my $bundle=Bundle::Wrapper->new(\%opt);
+    $bundle->step_print("formatYmatrix");
+    $bundle->input("$opt{file_geneSplicingSelect}");
     $opt{file_ymatrix} = $opt{dir_ymatrix}."/".Bundle::File->new($opt{gene})->Filename.".all.final.matrix.decomp";
-    $b->output("$opt{file_ymatrix}");
+    $bundle->output("$opt{file_ymatrix}");
     $cmd="cat $opt{file_geneSplicingSelect} | cut -f 6- | perl -F\"\\t\" -MList::Util=sum -lane 'if(\$.==1){print join \"\\t\",(\"Expression\",\@F)} if(sum(\@F)==0){next}print \"splice\".(\$.-1).\"\\t\",join \"\\t\",\@F' >  $opt{file_ymatrix}";
-    $b->run($cmd);
+    $bundle->run($cmd);
 }
 
 sub cleanIntermediate {
     my $cmd;	
-    my $b=Bundle::Wrapper->new(\%opt);
-    $b->step_print("Clean intermediate files");
+    my $bundle=Bundle::Wrapper->new(\%opt);
+    $bundle->step_print("Clean intermediate files");
     $cmd="rm -rf $opt{file_geneVcf} $opt{file_geneVcfselect} $opt{file_geneVcfSelectAc} $opt{file_geneSplicing} $opt{file_geneSplicingSelect}";
-    $b->run($cmd);
+    $bundle->run($cmd);
 }
 
 sub generateCov {
     my $cmd;	
-    my $b=Bundle::Wrapper->new(\%opt);
-    $b->step_print("generate cov for pair-wise snps for each gene from X matrix");
+    my $bundle=Bundle::Wrapper->new(\%opt);
+    $bundle->step_print("generate cov for pair-wise snps for each gene from X matrix");
     chomp(my @input = `ls $opt{file_ldRef}*`);
-    $b->input(@input);
-    $b->input("$opt{file_xmatrix}");
+    $bundle->input(@input);
+    $bundle->input("$opt{file_xmatrix}");
     $opt{file_cov} = $opt{dir_cov}."/".Bundle::File->new($opt{file_xmatrix},".x_all")->Prefix.".cov.RData";
-    $b->output($opt{file_cov});
+    $bundle->output($opt{file_cov});
     $cmd="Rscript $opt{dir_script}/generate_db_and_cov.R --input $opt{file_xmatrix} --dir_out $opt{dir_cov}  --ref_ld_chr $opt{file_ldRef}";
-    $b->run($cmd);
+    $bundle->run($cmd);
 }
 
 sub runMSG {
     my $cmd;	
-    my $b=Bundle::Wrapper->new(\%opt);
-    $b->step_print("run MSG using x matrix, y matrix and cov file");
-    $b->input($opt{file_xmatrix});
-    $b->input($opt{file_ymatrix});
-    $b->input($opt{file_cov});
-    $b->input($opt{sumstats});
+    my $bundle=Bundle::Wrapper->new(\%opt);
+    $bundle->step_print("run MSG using x matrix, y matrix and cov file");
+    $bundle->input($opt{file_xmatrix});
+    $bundle->input($opt{file_ymatrix});
+    $bundle->input($opt{file_cov});
+    $bundle->input($opt{sumstats});
     $opt{rlt} = $opt{dir_msg}."/results/all/".Bundle::File->new($opt{file_xmatrix},".x_all")->Prefix.".results.MSG_GBJ_ACAT.txt";
-    $b->output($opt{rlt});
+    $bundle->output($opt{rlt});
     $cmd="Rscript $opt{dir_script}/gtex_comp_MSG_ACAT_GBJ_120522.R --x $opt{file_xmatrix} --y $opt{file_ymatrix} --model_training --save_model --cov $opt{file_cov} --sumstats $opt{sumstats} --dir_out $opt{dir_out} --verbose TRUE";
-    $b->run($cmd);
+    $bundle->run($cmd);
 }
 
 
@@ -482,14 +484,23 @@ sub getArrayFromHashByName{
 }
 
 sub rsidToHash{
-    open(my $fh_rsid,$opt{file_rsid});
-    chomp(my @rsid = <$fh_rsid>);
-    my $hash;
-    foreach my $rsidLine(@rsid){
-	my @tmp = split/\t/,$rsidLine;
-	$hash->{"$tmp[0]:$tmp[1]"} = $tmp[2];
+    my $cmd;	
+    my $bundle=Bundle::Wrapper->new(\%opt);
+    $bundle->step_print("read rsid to hash...");
+    $bundle->input($opt{file_rsid});
+
+    if($bundle->isrun){
+	open(my $fh_rsid,$opt{file_rsid});
+	chomp(my @rsid = <$fh_rsid>);
+	my $hash;
+	foreach my $rsidLine(@rsid){
+	    my @tmp = split/\t/,$rsidLine;
+	    $hash->{"$tmp[0]:$tmp[1]"} = $tmp[2];
+	}
+	return $hash;
+    }else{
+	$bundle->throw("filed to read rsid to hash");
     }
-    return $hash;
 }
 
 ####################################################################
@@ -519,17 +530,17 @@ $0  [-h] [-v]
 
 Generate X matrix
 
-perl ~/script/msg.pl -cmd generateXmatrix -gene ENSG00000000457 -file_genePos /scratch/cgg/yany14/MSG/data/gene.500k.id -file_snp /scratch/cgg/yany14/MSG/data/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.SHAPEIT2_phased.vcf.gz  -file_sample /scratch/cgg/yany14/MSG/data/samples.filtered.used -e
+perl ~/script/msg.pl -cmd generateXmatrix -gene ENSG00000000457 -file_genePos /nobackup/cgg/yany14/MSG/data/gene.500k.id -file_snp /nobackup/cgg/yany14/MSG/data/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.SHAPEIT2_phased.vcf.gz  -file_sample /nobackup/cgg/yany14/MSG/data/samples.filtered.used -e
 
 
 Generate Y matrix
 
-perl ~/script/msg.pl -cmd generateYmatrix -gene ENSG00000000457 -file_genePos /scratch/cgg/yany14/MSG/data/gene.500k.id -file_splicing /fs0/yany14/MSG/data/rawSplice/Whole_Blood.v8.leafcutter_phenotypes.bed.gz -file_sample /scratch/cgg/yany14/MSG/data/samples.filtered.used -e
+perl ~/script/msg.pl -cmd generateYmatrix -gene ENSG00000000457 -file_genePos /nobackup/cgg/yany14/MSG/data/gene.500k.id -file_splicing /fs0/yany14/MSG/data/rawSplice/Whole_Blood.v8.leafcutter_phenotypes.bed.gz -file_sample /nobackup/cgg/yany14/MSG/data/samples.filtered.used -e
 
 
 Generate cov
 
-perl ~/script/msg.pl -cmd generateCov -file_xmatrix /fs0/chenr6/other/yany/MSG/out/ENSG00000000419.select.rsid.vcf.ac.x_all --file_ldRef /scratch/cgg/yany14/MSG/data/LDREF/1000G.EUR. -e
+perl ~/script/msg.pl -cmd generateCov -file_xmatrix /fs0/chenr6/other/yany/MSG/out/ENSG00000000419.select.rsid.vcf.ac.x_all --file_ldRef /nobackup/cgg/yany14/MSG/data/LDREF/1000G.EUR. -e
 
 Run MSG
 
