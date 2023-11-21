@@ -80,7 +80,7 @@ suppressMessages(require(dplyr))
 suppressMessages(require(magrittr))
 
 
-##mydir <- "/gpfs23/scratch/cgg/yany14/MSG/jy_script"
+## mydir <- "/fs0/chenr6/git_projects/MSG_code/scripts"
 
 mydir <- this.dir()
 ##print(mydir)
@@ -491,7 +491,7 @@ if(opt$verbose){
 if(opt$model_training){
     ## if ncol(y_all) > ncol(x_all), CCA will throw error because the V dimension is the minimium of these two numbers
     K = min(c(ncol(y_all),ncol(x_all))) 
-    mod = CCA(x_all,y_all,K=K)
+    mod = CCA(x_all,y_all,K=K,typex="standard",typez="standard")
     B_hat1 = mod$u
     print(dim(B_hat1))
     print(dim(snps))
