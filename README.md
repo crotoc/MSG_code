@@ -10,7 +10,9 @@ Y. Ji, Q. Wei, R. Chen, Q. Wang, R. Tao, B. Li, Integration of multidimensional 
 singularity > 3.8
 
 ```{bash}
-conda create -p /fs0/chenr6/chenr6/opt/condaEnv/msg
+conda create -p /path_to_env/msg
+
+conda activate /path_to_env/msg
 
 conda install -c conda-forge singularity
 
