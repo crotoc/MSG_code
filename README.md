@@ -65,6 +65,13 @@ conda activate /fs0/chenr6/chenr6/opt/condaEnv/msg
 
 ## run one gene to test
 singularity run -e --bind /nobackup,/home,/fs0  MSG.sif perl scripts/msg.pl -cmd generateXmatrix -cmd generateYmatrix -cmd generateCov -cmd runMSG -cmd cleanIntermediate -gene ENSG00000000457 -file_genePos data/gene.500k.id -file_snp data/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.SHAPEIT2_phased.vcf.gz -file_rsid data/hg38.vcf  -file_sample data/samples.filtered.used -file_splicing data/rawSplice/Whole_Blood.v8.leafcutter_phenotypes.bed.gz --file_ldRef data/LDREF/1000G.EUR. -sumstats data/sumstats/clozukscz.sumstats -dir_script scripts/ -e
+
+## check the results in out
+cat out/results/all/ENSG00000000457.select.rsid.vcf.ac.results.MSG_GBJ_ACAT.txt
+
+## generate cmds for all genes
+singularity run -e --bind /nobackup,/home,/fs0  MSG.sif parallel -j 1 -q echo "singularity run -e --bind /nobackup,/home,/fs0  MSG.sif perl scripts/msg.pl -cmd generateXmatrix -cmd generateYmatrix -cmd generateCov -cmd runMSG -cmd cleanIntermediate -gene {} -file_genePos data/gene.500k.id -file_snp data/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.SHAPEIT2_phased.vcf.gz -file_rsid data/hg38.vcf  -file_sample data/samples.filtered.used -file_splicing data/rawSplice/Whole_Blood.v8.leafcutter_phenotypes.bed.gz --file_ldRef data/LDREF/1000G.EUR. -sumstats data/sumstats/clozukscz.sumstats -dir_script scripts/ -e" ::: $(less data/gene.500k.id | grep protein_coding | cut -f 1 | sort -k1,1V ) > all.cmd
+
 ```
 
 5. Get helps of msg.pl by this way:
@@ -197,10 +204,12 @@ R -e 'library(devtools);install_github("XingjieShi/TisCoMM")'
 ## 6. link compilers
 parallel echo ln -s $ENV/bin/x86_64-conda_cos6-linux-gnu-cc $ENV/bin/{=s/.*-//=} ::: $ENV/bin/x86_64-conda_cos6-linux-gnu-cc $ENV/bin/x86_64-conda_cos6-linux-gnu-gcc $ENV/bin/x86_64-conda_cos6-linux-gnu-g++ | bash
 
-## run MSG
+## activate the ENV
 conda activate $ENV
 
-MSG.sif perl scripts/msg.pl -cmd generateXmatrix -cmd generateYmatrix -cmd generateCov -cmd runMSG -cmd cleanIntermediate -gene ENSG00000000457 -file_genePos data/gene.500k.id -file_snp data/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.SHAPEIT2_phased.vcf.gz -file_rsid data/hg38.vcf  -file_sample data/samples.filtered.used -file_splicing data/rawSplice/Whole_Blood.v8.leafcutter_phenotypes.bed.gz --file_ldRef data/LDREF/1000G.EUR. -sumstats data/sumstats/clozukscz.sumstats -dir_script scripts/ -e
+
+## run MSG
+perl scripts/msg.pl -cmd generateXmatrix -cmd generateYmatrix -cmd generateCov -cmd runMSG -cmd cleanIntermediate -gene ENSG00000000457 -file_genePos data/gene.500k.id -file_snp data/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.SHAPEIT2_phased.vcf.gz -file_rsid data/hg38.vcf  -file_sample data/samples.filtered.used -file_splicing data/rawSplice/Whole_Blood.v8.leafcutter_phenotypes.bed.gz --file_ldRef data/LDREF/1000G.EUR. -sumstats data/sumstats/clozukscz.sumstats -dir_script scripts/ -e
 ```
 
 

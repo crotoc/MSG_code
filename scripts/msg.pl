@@ -221,6 +221,7 @@ sub extractSnp {
     $bundle->output("$opt{file_geneVcf}");
     $cmd = "tabix $opt{file_snp} chr$gene[1]:$gene[2]-$gene[3] -h | grep -v \"^##\" > $opt{file_geneVcf}";
     $bundle->run($cmd);
+    &stopWhenLinesLTN($opt{file_geneVcf},2);
 }
 
 sub filterVcfSample {
@@ -255,7 +256,8 @@ sub filterVcfSample {
 		print $fh_geneVcfSelect join ("\t",@tmp[(0..8,@$select_idx)])."\n";
 	    }
 	}
-    }   
+    }
+    &stopWhenLinesLTN($opt{file_geneVcfSelect},2);
 }
 
 sub calculateAC {
@@ -285,6 +287,7 @@ sub calculateAC {
 	    }
 	}
     }
+    &stopWhenLinesLTN($opt{file_geneVcfSelectAc},2);
 }
 
 sub formatXmatrix {
@@ -312,6 +315,7 @@ sub formatXmatrix {
 	    print $fh_xmatrix join("\t",(@F[0,2,5,1,3,4,7,9..$#F]))."\n";;
 	}
     }
+    &stopWhenLinesLTN($opt{file_xmatrix},2);
 }
 
 
@@ -328,6 +332,7 @@ sub getSplicing {
     $bundle->output($opt{file_geneSplicing});
     $cmd="parallel -j $opt{threads} --line-buffer -k -q bash -c ' zq --raw '\\''select a.line from index_first a where (a.key like \"ID\" OR a.key like \"\%$opt{gene}\%\")'\\'' {1} | perl -F\"\\t\" -slane '\\''if(\$.==1){print \"tissue\\t\$_\";next}print \$tissue,\"\\t\$_\"'\\'' -- -tissue={=1 s#.*/##g;s#.v\\d+.*##g=}' ::: $opt{file_splicing}  ::: $opt{gene} > $opt{file_geneSplicing}";
     $bundle->run($cmd);
+    &stopWhenLinesLTN($opt{file_geneSplicing},3);
 }
 
 sub extractSplicing {
@@ -355,6 +360,7 @@ sub extractSplicing {
     if($colnum!=1){
 	$bundle->throw("The gene splicing file has lines with various columns. Make sure input the correct spicing files: a single tissue file or multiple files with the same columns")
     }
+    &stopWhenLinesLTN($opt{file_geneSplicing},3);
 }
 
 
@@ -381,7 +387,8 @@ sub filterSplicingSample {
 	    my @tmp = split/\t/,$geneSplicingLine;
 	    print $fh_geneSplicingSelect join ("\t",@tmp[(0..4,@$select_idx)])."\n";
 	}
-    }   
+    }
+    &stopWhenLinesLTN($opt{file_geneSplicingSelect},3);
 }
 
 
@@ -394,6 +401,7 @@ sub formatYmatrixForSingleTissue {
     $bundle->output("$opt{file_ymatrix}");
     $cmd="cat $opt{file_geneSplicingSelect} | cut -f 6- | perl -F\"\\t\" -MList::Util=sum -lane 'if(\$.==1){print join \"\\t\",(\"Expression\",\@F)} if(sum(\@F)==0){next}print \"splice\".(\$.-1).\"\\t\",join \"\\t\",\@F' >  $opt{file_ymatrix}";
     $bundle->run($cmd);
+    &stopWhenLinesLTN($opt{file_geneSplicingSelect},3);
 }
 
 sub cleanIntermediate {
@@ -502,6 +510,20 @@ sub rsidToHash{
 	$bundle->throw("filed to read rsid to hash");
     }
 }
+
+sub stopWhenLinesLTN {
+    my $cmd;	
+    my $bundle=Bundle::Wrapper->new(\%opt);
+
+    my $file = $_[0];
+    my $threshold = $_[1];
+    my $n = `wc -l $file | perl -ane 'chomp(\@F);print \$F[0]'`;
+    if($n<$threshold){
+	print STDERR "STOP: $file doesn't have enough number of lines (n=$n,threshold=$threshold)...\n";
+	exit()
+    }
+}
+
 
 ####################################################################
 ##                             TEMP FILE SAVE
